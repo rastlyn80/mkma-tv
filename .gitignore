@@ -1,0 +1,5 @@
+data/
+media/
+setup/kiosk.env
+node_modules/
+.DS_Store

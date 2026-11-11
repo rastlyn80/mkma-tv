@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7d1a29">
+<title>MKMA TV · Admin</title>
+<link rel="stylesheet" href="/static/shared/slide.css">
+<link rel="stylesheet" href="/static/admin.css">
+</head>
+<body>
+
+<!-- login / first-time setup -->
+<section id="login" class="login hidden">
+  <form id="loginForm" class="login-card">
+    <div class="brand-mark">♪</div>
+    <h1>MKMA TV</h1>
+    <p id="loginHint">Sign in to manage the academy screen.</p>
+    <input id="loginPw" type="password" autocomplete="current-password" placeholder="Password" required>
+    <input id="loginPw2" type="password" autocomplete="new-password" placeholder="Repeat password" class="hidden">
+    <button class="btn primary wide" type="submit" id="loginBtn">Sign in</button>
+    <p id="loginErr" class="err"></p>
+  </form>
+</section>
+
+<!-- main app -->
+<section id="app" class="hidden">
+  <header class="top">
+    <div class="brand"><span class="brand-mark sm">♪</span><span class="brand-text">MKMA TV</span></div>
+    <nav class="tabs">
+      <button data-tab="playlist" class="tab active">Playlist</button>
+      <button data-tab="settings" class="tab">Settings</button>
+    </nav>
+    <span id="saveState" class="save-state"></span>
+  </header>
+
+  <main>
+    <!-- playlist -->
+    <div id="tab-playlist" class="tabpane">
+      <div class="toolbar">
+        <label class="btn primary">
+          <span>＋ Photos / videos</span>
+          <input id="fileInput" type="file" accept="image/*,video/*" multiple hidden>
+        </label>
+        <button class="btn" id="newSlideBtn">＋ New slide</button>
+        <a class="btn ghost" href="/display" target="_blank" rel="noopener">View TV ↗</a>
+      </div>
+      <div id="uploads"></div>
+      <p class="hint" id="playHint">Drag <b>⠿</b> to reorder. The TV plays the switched-on items from top to bottom, then starts again.</p>
+      <ol id="list" class="list"></ol>
+      <div id="empty" class="empty hidden">
+        <p>Nothing on the screen yet.</p>
+        <p>Add some photos, or start with the <b>Today's lessons</b> slide.</p>
+      </div>
+    </div>
+
+    <!-- settings -->
+    <div id="tab-settings" class="tabpane hidden">
+      <form id="settingsForm" class="card form">
+        <h2>Screen</h2>
+        <label>Academy name <input name="academyName" maxlength="100"></label>
+        <label>Default time per item (seconds) <input name="defaultDuration" type="number" min="3" max="600"></label>
+        <label>Transition
+          <select name="transition"><option value="fade">Fade</option><option value="cut">Cut (instant)</option></select>
+        </label>
+        <label class="row"><input type="checkbox" name="showClock"> Show a clock in the corner</label>
+        <h2>Opening hours</h2>
+        <label class="row"><input type="checkbox" name="schedEnabled"> Black out the screen outside these hours</label>
+        <div class="two">
+          <label>On at <input name="schedOn" type="time"></label>
+          <label>Off at <input name="schedOff" type="time"></label>
+        </div>
+        <button class="btn primary" type="submit">Save settings</button>
+      </form>
+
+      <div class="card form">
+        <h2>Media library</h2>
+        <p class="hint">Files not used by any playlist item can be deleted to free space.</p>
+        <div id="mediaLib" class="media-lib"></div>
+      </div>
+
+      <form id="pwForm" class="card form">
+        <h2>Password</h2>
+        <label>Current password <input name="current" type="password" autocomplete="current-password" required></label>
+        <label>New password <input name="next" type="password" autocomplete="new-password" minlength="6" required></label>
+        <button class="btn" type="submit">Change password</button>
+        <p class="err" id="pwMsg"></p>
+      </form>
+      <button class="btn ghost" id="logoutBtn">Sign out</button>
+    </div>
+  </main>
+</section>
+
+<!-- template chooser -->
+<div id="tplSheet" class="sheet hidden">
+  <div class="sheet-card small">
+    <div class="sheet-head"><h2>New slide</h2><button class="x" data-close>✕</button></div>
+    <div id="tplGrid" class="tpl-grid"></div>
+  </div>
+</div>
+
+<!-- item editor -->
+<div id="editor" class="sheet hidden">
+  <div class="sheet-card">
+    <div class="sheet-head">
+      <h2 id="edTitle">Edit</h2>
+      <div class="head-actions">
+        <button class="btn ghost" id="edCancel">Cancel</button>
+        <button class="btn primary" id="edDone">Save</button>
+      </div>
+    </div>
+    <div class="ed-body">
+      <div class="ed-preview-wrap"><div class="ed-preview" id="edPreview"></div></div>
+      <div class="ed-form" id="edForm"></div>
+    </div>
+  </div>
+</div>
+
+<!-- media picker -->
+<div id="picker" class="sheet hidden">
+  <div class="sheet-card small">
+    <div class="sheet-head"><h2>Choose a photo</h2><button class="x" data-close>✕</button></div>
+    <label class="btn"><span>＋ Upload new</span><input id="pickerUpload" type="file" accept="image/*" hidden></label>
+    <div id="pickerGrid" class="picker-grid"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="/static/shared/render.js"></script>
+<script src="/static/admin.js"></script>
+</body>
+</html>

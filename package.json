@@ -1,0 +1,9 @@
+{
+  "name": "mkma-tv",
+  "version": "1.0.0",
+  "description": "Lightweight digital signage for Milton Keynes Music Academy",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "license": "UNLICENSED",
+  "private": true
+}
