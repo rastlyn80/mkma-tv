@@ -20,7 +20,7 @@ say "Installing packages (this takes a few minutes on the NUC)"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends \
-  nodejs cage chromium ffmpeg curl ca-certificates \
+  nodejs cage chromium ffmpeg curl ca-certificates openssh-server \
   avahi-daemon libnss-mdns unattended-upgrades \
   fonts-lato fonts-noto-core fonts-noto-color-emoji \
   mesa-va-drivers libgl1-mesa-dri
@@ -118,6 +118,9 @@ if [ -f /etc/default/grub ]; then
   grep -q consoleblank=0 /etc/default/grub || sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1 consoleblank=0"/' /etc/default/grub
   update-grub || true
 fi
+
+# If a desktop (e.g. GNOME) was installed by mistake, don't start it: boot to the kiosk instead
+systemctl set-default multi-user.target
 
 systemctl daemon-reload
 systemctl enable mkma-tv.service mkma-reboot.timer
