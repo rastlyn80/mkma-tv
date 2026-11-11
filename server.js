@@ -98,7 +98,7 @@ setInterval(() => { for (const res of clients) res.write(': ping\n\n'); }, 25000
 // ---------- helpers ----------
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml',
+  '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml',
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
   '.gif': 'image/gif', '.mp4': 'video/mp4', '.m4v': 'video/mp4', '.webm': 'video/webm',
   '.mov': 'video/quicktime', '.ico': 'image/x-icon', '.woff2': 'font/woff2',
@@ -222,7 +222,9 @@ async function handle(req, res) {
 
   // pages
   if (p === '/') return send(res, 302, '', { Location: '/admin' });
-  if (p === '/favicon.ico') { res.writeHead(204); return res.end(); }
+  if (p === '/favicon.ico') return serveFile(req, res, path.join(PUBLIC_DIR, 'icons', 'favicon-32.png'));
+  if (p === '/manifest.webmanifest') { res.setHeader('Content-Type', 'application/manifest+json'); return serveFile(req, res, path.join(PUBLIC_DIR, 'manifest.webmanifest')); }
+  if (p === '/sw.js') return serveFile(req, res, path.join(PUBLIC_DIR, 'sw.js'));
   if (p === '/display') return serveFile(req, res, path.join(PUBLIC_DIR, 'display.html'));
   if (p === '/admin') return serveFile(req, res, path.join(PUBLIC_DIR, 'admin.html'));
   if (p.startsWith('/media/')) {

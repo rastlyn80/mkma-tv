@@ -71,6 +71,29 @@ Open `http://academy-tv.local:8080/admin` on your iPad and choose an admin passw
 
 If `.local` names don't work on a device (some Android phones), use the IP address shown on the TV instead.
 
+## Access from anywhere (Tailscale)
+
+On the NUC:
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up --ssh          # open the link it prints and approve the NUC
+sudo tailscale serve --bg 8080   # secure https address for the admin
+```
+
+- In the Tailscale admin console, open **academy-tv** and choose **Disable key expiry**. If `tailscale serve` asks you to enable HTTPS, follow the link it prints; that's a one-time switch.
+- Install the Tailscale app on your phone/iPad and sign in with the same account.
+- The admin is then at **https://academy-tv.<your-tailnet>.ts.net/admin** from anywhere. `tailscale serve status` shows the exact address.
+
+## Install the admin as an app (iPhone, iPad, Android)
+
+Use the **https** Tailscale address above, so it installs as a proper full-screen app on both systems.
+
+- **iPhone / iPad:** open the admin in **Safari** → Share → **Add to Home Screen**.
+- **Android:** open it in **Chrome** → ⋮ menu → **Install app** (or *Add to Home screen*).
+
+The icon opens straight into the admin, full screen. Updates to the admin reach the app automatically.
+
 ## Updating later
 
 Copy the new version of the folder to the NUC the same way, then run `sudo bash setup/setup.sh` again. Your playlist, photos and password are kept in `/var/lib/mkma-tv` and are not touched by updates.
