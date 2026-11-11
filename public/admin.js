@@ -196,15 +196,16 @@
   async function prepareImage(file) {
     // Resize on this device so the old NUC never has to handle huge photos.
     if (file.type === 'image/gif') return { blob: file, name: file.name };
-    if (file.type === 'image/png' && file.size < 1.5e6) return { blob: file, name: file.name }; // logos with transparency
+    const isPng = file.type === 'image/png';
+    if (isPng && file.size < 1.5e6) return { blob: file, name: file.name }; // small logos: keep as they are
     try {
       const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
       const scale = Math.min(1, Math.max(1920 / bmp.width, 1080 / bmp.height));
       const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
       const c = document.createElement('canvas'); c.width = w; c.height = h;
       c.getContext('2d').drawImage(bmp, 0, 0, w, h);
-      const blob = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.86));
-      return { blob, name: file.name.replace(/\.[^.]+$/, '') + '.jpg' };
+      const blob = await new Promise((res) => c.toBlob(res, isPng ? 'image/png' : 'image/jpeg', 0.86));
+      return { blob, name: file.name.replace(/\.[^.]+$/, '') + (isPng ? '.png' : '.jpg') };
     } catch { return { blob: file, name: file.name }; }
   }
   function upload(blob, name, onProgress) {
@@ -347,6 +348,7 @@
       field('Name (only you see this)', el('input', { value: d.title || '', oninput: (e) => (d.title = e.target.value) })),
       field(`Seconds on screen · ${durHelp}`, el('input', { type: 'number', min: 0, max: 3600, value: d.duration || 0, oninput: (e) => (d.duration = Math.max(0, parseInt(e.target.value, 10) || 0)) })),
       d.type !== 'slide' ? field('Fit', seg([['cover', 'Fill the screen'], ['contain', 'Show the whole thing']], d.fit, (v) => { d.fit = v; updatePreview(); })) : null,
+      settings.logo && settings.logo.enabled && settings.logo.file ? el('label', { class: 'fld row' }, el('input', { type: 'checkbox', checked: !!d.hideLogo, onchange: (e) => (d.hideLogo = e.target.checked) }), 'Hide the logo on this item') : null,
       d.type === 'video' ? el('label', { class: 'fld row' }, el('input', { type: 'checkbox', checked: d.muted === false, onchange: (e) => (d.muted = !e.target.checked) }), 'Play sound') : null,
       d.type === 'video' && d.info && d.info.warnings && d.info.warnings.length ? el('div', { class: 'warn' }, ...d.info.warnings.map((w) => el('div', {}, '⚠ ' + w))) : null,
     ));
@@ -480,7 +482,31 @@
   }
 
   // ---------- settings ----------
+  let logoDraft = {};
+  function renderLogoBox() {
+    const box = $('#logoBox'); box.innerHTML = '';
+    const L = logoDraft;
+    const prev = el('div', { class: 'logo-prev' + (L.plate ? ' plate' : '') },
+      L.file ? el('img', { src: '/media/' + encodeURIComponent(L.file), alt: 'Logo', style: `opacity:${L.opacity || 1}` }) : el('span', { class: 'none' }, 'No logo yet'));
+    box.append(prev,
+      el('div', { class: 'add-blocks' },
+        el('button', { type: 'button', class: 'btn sm', onclick: async () => { const p = await pickImage(); if (p) { L.file = p; L.enabled = true; renderLogoBox(); } } }, L.file ? 'Change logo' : 'Choose logo'),
+        L.file ? el('button', { type: 'button', class: 'btn sm danger', onclick: () => { L.file = ''; L.enabled = false; renderLogoBox(); } }, 'Remove') : null),
+      el('p', { class: 'hint', style: 'margin:0' }, 'Tip: a PNG with a transparent background looks best.'));
+    if (!L.file) return;
+    box.append(
+      el('label', { class: 'row' }, el('input', { type: 'checkbox', checked: !!L.enabled, onchange: (e) => (L.enabled = e.target.checked) }), 'Show the logo on the TV'),
+      el('div', { class: 'fld' }, 'Corner', seg([['tl', '↖ Top left'], ['tr', '↗ Top right'], ['bl', '↙ Bottom left'], ['br', '↘ Bottom right']], L.position || 'tr', (v) => (L.position = v))),
+      el('div', { class: 'fld' }, 'Size', seg([['s', 'Small'], ['m', 'Medium'], ['l', 'Large']], L.size || 'm', (v) => (L.size = v))),
+      el('div', { class: 'fld' }, 'Show on', seg([['all', 'Everything'], ['media', 'Photos & videos'], ['slides', 'Slides only']], L.showOn || 'all', (v) => (L.showOn = v))),
+      el('label', { class: 'row' }, el('input', { type: 'checkbox', checked: !!L.plate, onchange: (e) => { L.plate = e.target.checked; renderLogoBox(); } }), 'White background behind the logo (helps dark logos on photos)'),
+      el('label', {}, 'Transparency', el('input', { type: 'range', min: 0.2, max: 1, step: 0.05, value: L.opacity || 1, oninput: (e) => { L.opacity = parseFloat(e.target.value); $('img', prev).style.opacity = L.opacity; } })),
+      el('p', { class: 'hint', style: 'margin:0' }, 'You can hide the logo on individual items from their edit screen.'));
+  }
+
   function fillSettings() {
+    logoDraft = clone(settings.logo || {});
+    renderLogoBox();
     const f = $('#settingsForm');
     f.academyName.value = settings.academyName || '';
     f.defaultDuration.value = settings.defaultDuration || 10;
@@ -494,9 +520,9 @@
     try {
       const r = await api('PUT', '/api/settings', {
         academyName: f.academyName.value, defaultDuration: f.defaultDuration.value, transition: f.transition.value,
-        showClock: f.showClock.checked, screenSchedule: { enabled: f.schedEnabled.checked, on: f.schedOn.value, off: f.schedOff.value },
+        showClock: f.showClock.checked, logo: logoDraft, screenSchedule: { enabled: f.schedEnabled.checked, on: f.schedOn.value, off: f.schedOff.value },
       });
-      settings = r.settings; toast('Settings saved'); renderList();
+      settings = r.settings; logoDraft = clone(settings.logo || {}); toast('Settings saved'); renderList();
     } catch (err) { toast(err.message); }
   });
   $('#pwForm').addEventListener('submit', async (e) => {

@@ -13,6 +13,7 @@ A lightweight replacement for Xogo. The NUC boots straight into a full-screen di
 - **Placeholders.** `{date}`, `{day}` and `{academy}` fill themselves in.
 - **Live updates.** Saving in the admin updates the TV within a couple of seconds.
 - **Light on the NUC.** Photos are resized on your phone/iPad before upload, and videos are checked on upload (H.264 MP4 recommended).
+- **Logo overlay.** Choose a corner, size, transparency and an optional white backing. Show it on everything, only on photos/videos, or only on slides, and hide it on individual items.
 - **Opening hours.** Optionally black the screen out overnight (Settings).
 - **Low maintenance.** Automatic security updates, a nightly restart at 04:30, and self-restart if anything crashes.
 
@@ -96,7 +97,13 @@ The icon opens straight into the admin, full screen. Updates to the admin reach 
 
 ## Updating later
 
-Copy the new version of the folder to the NUC the same way, then run `sudo bash setup/setup.sh` again. Your playlist, photos and password are kept in `/var/lib/mkma-tv` and are not touched by updates.
+SSH into the NUC (`ssh rastlyn@academy-tv`) and run:
+
+```bash
+cd ~/mkma-tv && git pull && sudo bash setup/setup.sh
+```
+
+The TV reloads itself with the new version within a few seconds, so no reboot is needed. Your playlist, photos and password are kept in `/var/lib/mkma-tv` and are not touched by updates.
 
 ## Backups
 

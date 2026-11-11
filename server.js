@@ -27,6 +27,7 @@ const DEFAULT_SETTINGS = {
   transition: 'fade',
   screenSchedule: { enabled: false, on: '08:00', off: '21:30' },
   showClock: false,
+  logo: { file: '', enabled: false, position: 'tr', size: 'm', showOn: 'all', plate: false, opacity: 1 },
 };
 
 // ---------- storage ----------
@@ -44,8 +45,10 @@ if (!db) {
   writeJSON(DB_FILE, db);
 }
 db.settings = { ...DEFAULT_SETTINGS, ...db.settings };
+db.settings.logo = { ...DEFAULT_SETTINGS.logo, ...(db.settings.logo || {}) };
 let auth = readJSON(AUTH_FILE, { hash: null, salt: null });
 const sessions = new Map(); // token -> expiry
+const BOOT_ID = crypto.randomBytes(6).toString('hex'); // changes on every restart/update
 
 function saveDb() { db.updatedAt = Date.now(); writeJSON(DB_FILE, db); broadcast(); }
 
@@ -90,7 +93,7 @@ function tooMany(ip) {
 // ---------- live updates (Server-Sent Events) ----------
 const clients = new Set();
 function broadcast() {
-  const msg = `data: ${JSON.stringify({ updatedAt: db.updatedAt })}\n\n`;
+  const msg = `data: ${JSON.stringify({ updatedAt: db.updatedAt, boot: BOOT_ID })}\n\n`;
   for (const res of clients) res.write(msg);
 }
 setInterval(() => { for (const res of clients) res.write(': ping\n\n'); }, 25000);
@@ -191,6 +194,18 @@ async function serveFile(req, res, file, cache) {
 }
 
 // ---------- validation ----------
+function cleanLogo(l, prev) {
+  if (!l || typeof l !== 'object') return prev;
+  return {
+    file: l.file ? path.basename(String(l.file)) : '',
+    enabled: !!l.enabled,
+    position: ['tl', 'tr', 'bl', 'br'].includes(l.position) ? l.position : 'tr',
+    size: ['s', 'm', 'l'].includes(l.size) ? l.size : 'm',
+    showOn: ['all', 'media', 'slides'].includes(l.showOn) ? l.showOn : 'all',
+    plate: !!l.plate,
+    opacity: Math.max(0.2, Math.min(1, Number(l.opacity) || 1)),
+  };
+}
 const ITEM_TYPES = new Set(['image', 'video', 'slide']);
 function cleanItems(items) {
   if (!Array.isArray(items)) throw new Error('items must be an array');
@@ -208,6 +223,7 @@ function cleanItems(items) {
       src: it.src ? path.basename(String(it.src)) : undefined,
       fit: it.fit === 'contain' ? 'contain' : 'cover',
       muted: it.muted !== false,
+      hideLogo: !!it.hideLogo,
       slide: it.type === 'slide' ? it.slide : undefined,
       info: it.info,
     };
@@ -241,7 +257,7 @@ async function handle(req, res) {
   // live updates
   if (p === '/events') {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
-    res.write(`data: ${JSON.stringify({ updatedAt: db.updatedAt || 0 })}\n\n`);
+    res.write(`data: ${JSON.stringify({ updatedAt: db.updatedAt || 0, boot: BOOT_ID })}\n\n`);
     clients.add(res);
     req.on('close', () => clients.delete(res));
     return;
@@ -292,6 +308,7 @@ async function handle(req, res) {
       defaultDuration: Math.max(3, Math.min(600, Number(s.defaultDuration) || 10)),
       transition: s.transition === 'cut' ? 'cut' : 'fade',
       showClock: !!s.showClock,
+      logo: cleanLogo(s.logo, db.settings.logo),
       screenSchedule: {
         enabled: !!(s.screenSchedule && s.screenSchedule.enabled),
         on: /^\d{2}:\d{2}$/.test(s.screenSchedule?.on) ? s.screenSchedule.on : '08:00',
@@ -334,6 +351,7 @@ async function handle(req, res) {
   if (p === '/api/media' && req.method === 'GET') {
     const files = await fsp.readdir(MEDIA_DIR);
     const used = new Set();
+    if (db.settings.logo && db.settings.logo.file) used.add(db.settings.logo.file);
     for (const it of db.items) {
       if (it.src) used.add(it.src);
       if (it.slide && it.slide.bgImage) used.add(it.slide.bgImage);

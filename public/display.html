@@ -16,6 +16,16 @@
   .fit-cover { object-fit: cover; } .fit-contain { object-fit: contain; }
   #clock { position: absolute; right: 56px; top: 40px; z-index: 5; font: 600 40px "Lato", sans-serif;
     color: #fff; background: rgba(0,0,0,.45); padding: 10px 24px; border-radius: 14px; display: none; }
+  #logo { position: absolute; z-index: 6; opacity: 0; transition: opacity .9s ease; pointer-events: none; }
+  #logo.on { opacity: var(--logo-opacity, 1); }
+  #logo img { display: block; width: auto; height: auto; }
+  #logo.plate { background: rgba(255,255,255,.88); border-radius: 18px; padding: 16px 22px; }
+  #logo.pos-tl { left: 56px; top: 44px; } #logo.pos-tr { right: 56px; top: 44px; }
+  #logo.pos-bl { left: 56px; bottom: 44px; } #logo.pos-br { right: 56px; bottom: 44px; }
+  #logo.size-s img { max-width: 200px; max-height: 90px; }
+  #logo.size-m img { max-width: 300px; max-height: 130px; }
+  #logo.size-l img { max-width: 440px; max-height: 190px; }
+  #clock.left { right: auto; left: 56px; }
   #sleep { position: absolute; inset: 0; background: #000; z-index: 10; display: none; }
 </style>
 </head>
@@ -23,6 +33,7 @@
 <div id="stage">
   <div class="layer" id="layerA"></div>
   <div class="layer" id="layerB"></div>
+  <div id="logo"><img alt=""></div>
   <div id="clock"></div>
   <div id="sleep"></div>
 </div>

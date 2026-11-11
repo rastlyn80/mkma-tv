@@ -15,6 +15,7 @@
   let sleeping = false;
   let current = null;      // item on screen
   let seq = 0;             // guards against overlapping transitions
+  let bootId = null;       // server instance; changes after an update
 
   // ---- scale the 1920×1080 stage to fit any screen ----
   function fit() {
@@ -34,10 +35,29 @@
     applySettings();
   }
 
+  const logoEl = document.getElementById('logo');
+  const logoImg = logoEl.querySelector('img');
   function applySettings() {
     const s = state.settings || {};
     clockEl.style.display = s.showClock ? 'block' : 'none';
+    const lg = s.logo || {};
+    if (lg.file) {
+      const src = '/media/' + encodeURIComponent(lg.file);
+      if (logoImg.getAttribute('src') !== src) logoImg.setAttribute('src', src);
+    }
+    logoEl.className = `pos-${lg.position || 'tr'} size-${lg.size || 'm'}${lg.plate ? ' plate' : ''}${logoEl.classList.contains('on') ? ' on' : ''}`;
+    logoEl.style.setProperty('--logo-opacity', lg.opacity || 1);
+    clockEl.classList.toggle('left', lg.enabled && lg.position === 'tr');
     layers.forEach((l) => l.classList.toggle('fade', s.transition !== 'cut'));
+  }
+
+  // Show or hide the logo overlay for the item about to appear
+  function updateLogo(item) {
+    const lg = (state.settings || {}).logo || {};
+    let show = !!(lg.enabled && lg.file && item && !item.hideLogo);
+    if (show && lg.showOn === 'media') show = item.type === 'image' || item.type === 'video';
+    if (show && lg.showOn === 'slides') show = item.type === 'slide';
+    logoEl.classList.toggle('on', show);
   }
 
   function activeItems() {
@@ -117,6 +137,7 @@
     }
 
     // swap layers
+    updateLogo(current ? item : null);
     back.classList.add('on');
     layers[front].classList.remove('on');
     const old = layers[front];
@@ -163,6 +184,7 @@
   async function onChange() {
     const shown = current ? JSON.stringify(current) : null;
     await loadState();
+    updateLogo(current);
     if (sleeping) { checkSleep(); return; }
     const list = activeItems();
     const idx = current ? list.findIndex((it) => it.id === current.id) : -1;
@@ -177,6 +199,8 @@
     es.onmessage = (e) => {
       try {
         const d = JSON.parse(e.data);
+        // Server restarted (e.g. after an update): reload so the TV runs the new version
+        if (d.boot) { if (bootId && d.boot !== bootId) return location.reload(); bootId = d.boot; }
         if (d.updatedAt && d.updatedAt !== state.updatedAt) onChange();
       } catch (_) {}
     };

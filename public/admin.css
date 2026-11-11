@@ -174,3 +174,11 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   main { padding: 12px; }
 }
 html, body { overflow-x: hidden; }
+
+/* logo settings */
+.logo-box { display: grid; gap: 12px; }
+.logo-prev { width: 220px; height: 110px; border-radius: 10px; display: grid; place-items: center; padding: 12px;
+  background: repeating-conic-gradient(#d9d4cc 0 25%, #f3efe8 0 50%) 0 0 / 16px 16px; border: 1px solid var(--line); }
+.logo-prev img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.logo-prev.plate img { background: rgba(255,255,255,.9); padding: 8px 12px; border-radius: 8px; }
+.logo-prev .none { color: #6f6862; font-size: 14px; }
