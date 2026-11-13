@@ -45,6 +45,14 @@ if [ "$SRC" != "$APP" ]; then
   cp -r "$SRC/server.js" "$SRC/package.json" "$SRC/public" "$SRC/setup" "$APP/"
 fi
 chmod +x "$APP/setup/kiosk-session.sh"
+# Build an invisible cursor theme so no mouse pointer shows on the TV
+CUR="$APP/setup/cursors/invisible"
+mkdir -p "$CUR/cursors"
+printf '[Icon Theme]\nName=invisible\n' > "$CUR/index.theme"
+for n in default left_ptr arrow top_left_arrow pointer hand1 hand2 text xterm wait watch progress \
+         left_ptr_watch crosshair grab grabbing move not-allowed help question_arrow col-resize row-resize; do
+  cp "$APP/setup/cursor/blank" "$CUR/cursors/$n"
+done
 chown -R "$KIOSK_USER:$KIOSK_USER" "$DATA"
 
 say "Setting up the background service"

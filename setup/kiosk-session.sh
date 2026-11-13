@@ -14,8 +14,13 @@ done
 
 CHROME="$(command -v chromium || command -v chromium-browser)"
 
+# Invisible mouse pointer (the TV has no mouse; this hides the arrow)
+export XCURSOR_PATH="$DIR/cursors"
+export XCURSOR_THEME=invisible
+export XCURSOR_SIZE=24
+
 while true; do
-  cage -d -- "$CHROME" \
+  cage -d -s -- "$CHROME" \
     --kiosk "$URL" \
     --incognito \
     --no-first-run \
